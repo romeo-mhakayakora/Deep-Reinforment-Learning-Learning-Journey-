@@ -1,0 +1,120 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>One-Step Online Actor-Critic  Notes</title>
+  <meta name="description" content="Core concepts for one-step online actor-critic (TD(0))." />
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <p class="brand-title">DeepRL</p>
+        <p class="brand-subtitle">actor-critic</p>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="../">Home</a>
+        <a href="./">Actor-Critic</a>
+        <a href="../policy-methods/">Policy Methods</a>
+        <a href="../value-methods/">Value Methods</a>
+        <a href="./one-step-actor-critic-notes.html" aria-current="page">Notes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container content">
+    <article class="prose">
+      <h1>One-Step Online Actor-Critic  Core Concepts</h1>
+      <p class="meta">These notes match the one-step (TD(0)) online actor-critic pseudocode.</p>
+
+      <section class="card">
+        <h2>1. Architecture</h2>
+        <p>
+          <strong>Actor</strong>: parameterized policy network
+          <code>&pi;<sub>&theta;</sub>(a|s)</code> that outputs an action probability distribution (discrete)
+          or mean/std (continuous).
+        </p>
+        <p>
+          <strong>Critic</strong>: parameterized value network
+          <code>V<sub>&varphi;</sub>(s)</code> estimating expected return from state <code>s</code>.
+        </p>
+        <p>Both networks share the environment state as input but maintain <strong>separate parameter vectors</strong>.</p>
+      </section>
+
+      <section class="card">
+        <h2>2. Learning Style</h2>
+        <p><strong>Online</strong>: updates occur after every transition (state &rarr; action &rarr; reward &rarr; next state).</p>
+        <p><strong>One-step</strong>: uses <strong>1-step bootstrapping</strong> via the critic instead of waiting for a full episode.</p>
+      </section>
+
+      <section class="card">
+        <h2>3. TD(0) Advantage (Policy Gradient Signal)</h2>
+        <p>The 1-step advantage is the temporal difference error:</p>
+        <p><code>A(s_t, a_t) = r_{t+1} + &gamma;V(s_{t+1}) &minus; V(s_t)</code></p>
+        <p>In code form:</p>
+        <div class="codeblock"><pre><code>advantage = reward + gamma * critic(next_state) - critic(state)</code></pre></div>
+        <p>This tells us how much better or worse the taken action was compared to expectation.</p>
+      </section>
+
+      <section class="card">
+        <h2>4. Actor Loss (Policy Update Objective)</h2>
+        <p><code>L_actor = &minus;log &pi;<sub>&theta;</sub>(a_t|s_t) &middot; A(s_t, a_t)</code></p>
+        <p>In code:</p>
+        <div class="codeblock"><pre><code>loss_actor = - policy.log_prob(action) * advantage</code></pre></div>
+
+        <h3>Effect of Advantage on Policy</h3>
+        <p><code>A &gt; 0</code> &rarr; gradient step increases probability of action <code>a_t</code></p>
+        <p><code>A &lt; 0</code> &rarr; gradient step decreases probability of action <code>a_t</code></p>
+      </section>
+
+      <section class="card">
+        <h2>5. Critic Loss (Value Function Update)</h2>
+        <p><code>L_critic = A^2</code></p>
+        <p>In code:</p>
+        <div class="codeblock"><pre><code>loss_critic = advantage ** 2</code></pre></div>
+
+        <p>More formally, some implementations regress to the 1-step TD target:</p>
+        <div class="codeblock"><pre><code>target = reward + gamma * critic(next_state).detach()
+loss_critic = (critic(state) - target) ** 2</code></pre></div>
+
+        <p class="meta">(Both express the same TD correction signal; <code>A^2</code> is simply the squared TD error.)</p>
+      </section>
+
+      <section class="card">
+        <h2>6. Update Rules (Gradient Step)</h2>
+        <div class="codeblock"><pre><code>actor_optimizer.zero_grad()
+loss_actor.backward()
+actor_optimizer.step()
+
+critic_optimizer.zero_grad()
+loss_critic.backward()
+critic_optimizer.step()</code></pre></div>
+      </section>
+
+      <section class="card">
+        <h2>One-Step Online Actor-Critic  Algorithm Flow</h2>
+        <p>1. Observe state <code>s_t</code></p>
+        <p>2. Actor produces policy distribution <code>&pi;(a|s_t)</code></p>
+        <p>3. Sample action <code>a_t ~ &pi;</code></p>
+        <p>4. Execute action in environment</p>
+        <p>5. Observe reward <code>r_{t+1}</code> and next state <code>s_{t+1}</code></p>
+        <p>6. Critic estimates <code>V(s_t)</code> and <code>V(s_{t+1})</code></p>
+        <p>7. Compute advantage (TD error)</p>
+        <p>8. Update actor using <code>&minus;log &pi;(a_t|s_t) * A</code></p>
+        <p>9. Update critic using TD target or squared TD error</p>
+        <p>10. Repeat</p>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="meta">DeepRL  <a href="./">Back to actor-critic</a>  <a href="../">Home</a></div>
+    </div>
+  </footer>
+</body>
+</html>
