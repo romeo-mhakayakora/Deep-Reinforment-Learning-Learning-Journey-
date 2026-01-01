@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+  <meta charset='UTF-8'>
+  <title>Applied Linear Algebra – N-Step Actor–Critic Notes</title>
+  <style>
+    body {
+      font-family: "Times New Roman", serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: auto;
+      padding: 16px;
+    }
+    h1, h2 {
+      font-weight: 400;
+    }
+    .MathJax {
+      font-size: 1.2em !important;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>N-Step Actor–Critic Notes</h1>
+
+<h2>1. Monte Carlo (MC) vs TD(0) vs N-Step</h2>
+<p><strong>Monte Carlo (full episode updates):</strong> The agent waits until the end of a trajectory before updating. Because it sees the entire reward sequence, the value target is very accurate and has low bias, but updates are infrequent. In physical systems like racing or drones, this is inefficient because crashes and environment resets make full episodes expensive to collect.</p>
+
+<p><strong>TD(0) (1-step bootstrapping):</strong> Updates after every transition using the critic’s immediate prediction of the next state. This gives high sample efficiency and fast updates, but critic targets can be noisy and biased, which may destabilize learning in fast, continuous control problems.</p>
+
+<p><strong>N-Step (sweet spot):</strong> The agent collects a small chunk of real experience (N steps), then uses bootstrapping once to estimate the rest. This reduces bias while still allowing frequent updates — ideal for control tasks with sensitive dynamics.</p>
+
+<h2>2. What Bootstrapping Means in Actor–Critic</h2>
+<p>Bootstrapping means you don’t wait for the final reward. Instead, you let the critic estimate future value:</p>
+<pre>reward collected from environment + predicted value of next state</pre>
+
+<p>This is powerful because the agent can learn directionally correct gradients even with limited real experience. But since the critic is itself a neural network, its predictions improve when we give it more real trajectory context before trusting the bootstrap — which is exactly what N-step returns do.</p>
+
+<h2>3. N-Step Return (Critic Target)</h2>
+<p>This is the estimated total discounted reward starting at time t, using:</p>
+<ul>
+  <li>N real environment rewards</li>
+  <li>1 bootstrap from critic at state t+N</li>
+</ul>
+
+<p><em>Expanded form:</em></p>
+<p>$$A_t = \delta_t = R + \gamma V_\phi(S_{t+1}) - V_\phi(S_t)$$</p>
+
+<p><em>Compact form:</em></p>
+<p>$$G_t(N) = \sum_{k=0}^{N-1} \gamma^k r_{t+k+1} + \gamma^N V_\phi(s_{t+N})$$</p>
+
+<p><strong>Interpretation:</strong> The first part is real signal from the environment. The last term is the critic saying, “if we continued from here, this is what the future return might look like.”</p>
+
+<h2>4. Advantage (Policy Improvement Signal for the Actor)</h2>
+<p>The actor needs to know whether an action was better than expected. We compute:</p>
+<p>$$A_t(N) = G_t(N) - V_\phi(s_t)$$</p>
+
+<p><strong>Meaning:</strong></p>
+<ul>
+  <li>$$G_t(N)$$ = what actually happened (plus bootstrap)</li>
+  <li>$$V(S_t)$$ = what the critic thought would happen</li>
+</ul>
+
+<p>Their difference tells the actor whether to increase or decrease the probability of action a_t.</p>
+
+<h2>5. Critic Loss (Value Network Training Objective)</h2>
+<p>We train the critic to make better predictions by minimizing the squared error:</p>
+<p>$$L_{\text{critic}} = \left(V_\phi(s_t) - G_t(N)\right)^2$$</p>
+
+<p><strong>Interpretation:</strong> We want the critic’s value surface to match the more accurate N-step return, leading to smoother learning and reduced oscillation.</p>
+
+<h2>6. Actor Update (Policy Gradient)</h2>
+<p>Because ML frameworks minimize loss, we negate the objective to perform gradient ascent:</p>
+<p>$$L_{\text{actor}} = - \log \pi_\theta(a_t \mid s_t) \cdot A_t(N)$$</p>
+
+<p><em>Gradient form:</em></p>
+<p>$$\nabla_\theta J = \nabla_\theta \log \pi_\theta(a_t \mid s_t) \cdot A_t(N)$$</p>
+
+<p><em>Parameter update:</em></p>
+<p>$$\theta \leftarrow \theta + \alpha_a \nabla_\theta \log \pi_\theta(a_t \mid s_t) A_t(N)$$</p>
+
+<p><strong>Meaning:</strong> If advantage is positive, increase likelihood of the action. If negative, reduce it.</p>
+
+<h2>7. Full N-Step Actor–Critic Update Rule</h2>
+<p>After collecting N steps from the environment:</p>
+<p>$$\phi \leftarrow \phi - \alpha_c \nabla_\phi \left(V_\phi(s_t) - G_t(N)\right)^2$$</p>
+<p>$$\theta \leftarrow \theta + \alpha_a \nabla_\theta \log \pi_\theta(a_t \mid s_t) A_t(N)$$</p>
+
+<h2>8. Why This Applies to Drone or Vehicle Racing</h2>
+<ul>
+  <li><strong>High-speed dynamics amplify errors:</strong> Biased value targets can produce bad control gradients → instability.</li>
+  <li><strong>Real flight time is expensive:</strong> N-step gives frequent updates without needing full episodes.</li>
+  <li><strong>Better critic targets →</strong> better cornering, throttle, and trajectory decisions.</li>
+  <li><strong>Bootstrapping + N-step →</strong> preserves sample efficiency while reducing bias.</li>
+</ul>
+
+<h2>9. Optional Extensions</h2>
+<p>You can later plug these into:</p>
+<ul>
+  <li>Continuous action spaces (using mean/std policy heads)</li>
+  <li>3D homogeneous transforms for drone state vectors</li>
+  <li>GAE (generalized advantage estimation) as a smoothed version of N-step</li>
+</ul>
+
+</body>
+</html>
