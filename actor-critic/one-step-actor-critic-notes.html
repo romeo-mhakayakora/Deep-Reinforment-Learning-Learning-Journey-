@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>One-Step Online Actor-Critic  Notes</title>
-  <meta name="description" content="Notes and core concepts for one-step online actor-critic (TD(0))." />
+  <title>One-Step Online Actor-Critic — Notes</title>
+  <meta name="description" content="Study notes for One-step online Actor-Critic (TD0)." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
 <body>
@@ -18,84 +18,117 @@
       </div>
       <nav class="nav" aria-label="Primary">
         <a href="../">Home</a>
-        <a href="./">Actor-Critic</a>
+        <a href="./">Actor–Critic</a>
         <a href="../policy-methods/">Policy Methods</a>
         <a href="../value-methods/">Value Methods</a>
-        <a href="./one-step-actor-critic-notes.html" aria-current="page">Notes</a>
+        <a href="./one-step-actor-critic-notes.html" aria-current="page">One-Step AC Notes</a>
       </nav>
     </div>
   </header>
 
   <main id="main" class="container content">
     <article class="prose">
-      <h1>ONE-STEP ONLINE ACTOR-CRITIC  CORE CONCEPTS</h1>
+      <h1>One-Step Online Actor-Critic (TD0, Online) — Study Notes</h1>
+      <p class="meta">Concise, structured reference for the 1-step online Actor–Critic algorithm.</p>
 
-      <section class="card">
-        <h2>3. TD(0) Advantage (Policy Gradient Signal)</h2>
-        <p>The 1-step advantage is the temporal difference error:</p>
-        <p><code>A(s_t, a_t) = r_{t+1} + &gamma;V(s_{t+1}) &minus; V(s_t)</code></p>
-        <p>In code form:</p>
-        <div class="codeblock"><pre><code>advantage = reward + gamma * critic(next_state) - critic(state)</code></pre></div>
-        <p>This tells us how much better or worse the taken action was compared to expectation.</p>
+      <section>
+        <h2>1. Architecture</h2>
+        <div class="section-box">
+          <p><strong>Actor</strong>: Policy network πθ(a|s) producing an action distribution.</p>
+          <p><strong>Critic</strong>: Value network Vϕ(s) estimating expected return from state s.</p>
+          <p>Shared state input, separate parameter vectors, separate gradient updates.</p>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>4. Actor Loss (Policy Update Objective)</h2>
-        <p><code>L_actor = &minus;log &pi;&theta;(a_t|s_t) &middot; A(s_t, a_t)</code></p>
-        <p>In code:</p>
-        <div class="codeblock"><pre><code>loss_actor = - policy.log_prob(action) * advantage</code></pre></div>
-
-        <h3>Effect of Advantage on Policy</h3>
-        <p><code>A &gt; 0</code> &rarr; gradient step increases probability of action <code>a_t</code></p>
-        <p><code>A &lt; 0</code> &rarr; gradient step decreases probability of action <code>a_t</code></p>
+      <section>
+        <h2>2. Learning Style</h2>
+        <div class="section-box">
+          <p><strong>Online learning</strong>: Update immediately after each transition.</p>
+          <p><strong>One-step bootstrapping</strong>: Uses critic estimate of V(sₜ₊₁) for TD target.</p>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>5. Critic Loss (Value Function Update)</h2>
-        <p><code>L_critic = A^2</code></p>
-        <p>In code:</p>
-        <div class="codeblock"><pre><code>loss_critic = advantage ** 2</code></pre></div>
-
-        <p>More formally, some implementations regress to the 1-step TD target:</p>
-        <div class="codeblock"><pre><code>target = reward + gamma * critic(next_state).detach()
-loss_critic = (critic(state) - target) ** 2</code></pre></div>
-
-        <p class="meta">(Both express the same TD correction signal; <code>A^2</code> is simply the squared TD error.)</p>
+      <section>
+        <h2>3. Advantage (TD0 Error)</h2>
+        <div class="section-box">
+          <p>A(sₜ, aₜ) = rₜ₊₁ + γV(sₜ₊₁) − V(sₜ)</p>
+          <p>This is equivalent to the 1-step TD(0) error used as the policy gradient signal.</p>
+        </div>
       </section>
 
-      <section class="card">
-        <h2>6. Update Rules (Gradient Step)</h2>
-        <div class="codeblock"><pre><code>actor_optimizer.zero_grad()
+      <section>
+        <h2>4. Actor Loss Objective</h2>
+        <div class="section-box">
+          <p>L_actor = − log πθ(aₜ|sₜ) * A(sₜ, aₜ)</p>
+          <p>Minimizing this performs gradient ascent on expected return.</p>
+          <p>Positive advantage increases π(aₜ|sₜ), negative suppresses it.</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. Critic Loss Objective</h2>
+        <div class="section-box">
+          <p>L_critic = A²  (squared TD error MSE)</p>
+          <p>Alternative form regresses to TD target: (V(sₜ) − (rₜ₊₁ + γV(sₜ₊₁)))²</p>
+          <p>Both optimize the same TD correction signal.</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. Update Step (Gradient Rule)</h2>
+        <section class="codeblock">
+          <pre><code>actor_optimizer.zero_grad()
 loss_actor.backward()
 actor_optimizer.step()
 
 critic_optimizer.zero_grad()
 loss_critic.backward()
-critic_optimizer.step()</code></pre></div>
+critic_optimizer.step()</code></pre>
+        </section>
       </section>
 
-      <h2>ONE-STEP ONLINE ACTOR-CRITIC  ALGORITHM FLOW</h2>
-      <section class="card">
-        <ol>
-          <li>Observe state <code>s_t</code></li>
-          <li>Actor produces policy distribution <code>&pi;(a|s_t)</code></li>
-          <li>Sample action <code>a_t ~ &pi;</code></li>
-          <li>Execute action in environment</li>
-          <li>Observe reward <code>r_{t+1}</code> and next state <code>s_{t+1}</code></li>
-          <li>Critic estimates <code>V(s_t)</code> and <code>V(s_{t+1})</code></li>
-          <li>Compute advantage (TD error)</li>
-          <li>Update actor using <code>&minus;log &pi;(a_t|s_t) * A</code></li>
-          <li>Update critic using TD target or squared TD error</li>
-          <li>Repeat</li>
-        </ol>
+      <section>
+        <h2>7. Algorithm Flow</h2>
+        <div class="section-box">
+          <ol>
+            <li>Observe state sₜ</li>
+            <li>Actor produces policy π(a|sₜ)</li>
+            <li>Sample action aₜ ~ π</li>
+            <li>Execute action</li>
+            <li>Observe reward rₜ₊₁ and next state sₜ₊₁</li>
+            <li>Critic estimates V(sₜ) and V(sₜ₊₁)</li>
+            <li>Compute advantage (TD0 error)</li>
+            <li>Update Actor with −log π(aₜ|sₜ) * A</li>
+            <li>Update Critic using TD target or A²</li>
+            <li>Repeat immediately (online loop)</li>
+          </ol>
+        </div>
       </section>
+
+      <section>
+        <h2>8. Common Pitfalls</h2>
+        <div class="section-box">
+          <ul>
+            <li>Forgetting the discount factor γ in the TD advantage</li>
+            <li>Adding immediate reward twice when using Monte-Carlo advantage</li>
+            <li>Expecting GitHub raw CDN to render HTML (use GitHub Pages instead)</li>
+            <li>Creating commits while detached during a rebase</li>
+          </ul>
+        </div>
+      </section>
+
     </article>
   </main>
 
   <footer class="site-footer">
     <div class="container">
-      <div class="meta">DeepRL  <a href="./">Back to actor-critic</a>  <a href="../">Home</a></div>
+      <div class="meta">
+        DeepRL — Learning Journey  
+        <a href="./">Back to actor-critic</a>  
+        <a href="../">Home</a>
+      </div>
     </div>
   </footer>
+
 </body>
 </html>
