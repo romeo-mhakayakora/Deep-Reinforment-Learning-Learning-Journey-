@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>One-Step Online Actor-Critic — Pseudocode</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            padding: 20px;
+            background: #ffffff;
+        }
+        h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        .container {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #222222;
+            margin-bottom: 16px;
+        }
+        pre {
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h2>ONE-STEP ONLINE ACTOR-CRITIC ALGORITHM — PSEUDOCODE (TD0, Online)</h2>
+
+<div class="container">
+<pre>
+gamma  = 0.9  # Discount factor
+
+for i in epochs:
+
+    state = environment.get_state()
+
+    value  = critic(state)
+    policy = actor(state)
+    action = policy.sample()
+
+    next_state, reward = environment.take_action(action)
+    next_value = critic(next_state)
+
+    advantage = reward + gamma * next_value - value  # TD error (1-step)
+
+    # Note: In online Actor-Critic, this 1-step advantage is equivalent to TD(0) error.
+    # Monte-Carlo AC uses a different return-based advantage formulation.
+
+    loss_actor  = - policy.log_prob(action) * advantage  # Policy gradient objective
+    loss_critic = advantage ** 2                         # Critic update (TD error MSE)
+
+    update_actor(loss_actor)
+    update_critic(loss_critic)
+
+# The loop is online: updates occur immediately after each transition.
+# 1-step TD advantage is valid for TD0 AC, but not universal for GAE or n-step advantages.
+</pre>
+</div>
+
+</body>
+</html>
+</pre>
