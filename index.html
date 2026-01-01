@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DeepRL  Home</title>
+  <meta name="description" content="Deep reinforcement learning notes and pseudocode." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <p class="brand-title">DeepRL</p>
+        <p class="brand-subtitle">notes, pseudocode, and small experiments</p>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="./" aria-current="page">Home</a>
+        <a href="actor-critic/">Actor-Critic</a>
+        <a href="policy-methods/">Policy Methods</a>
+        <a href="value-methods/">Value Methods</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section class="hero">
+      <h1>Deep reinforcement learning, distilled</h1>
+      <p>Start at the root, then drill into method families.</p>
+    </section>
+
+    <section class="grid" aria-label="Sections">
+      <article class="card">
+        <h2><a href="actor-critic/">Actor-Critic</a></h2>
+        <p>Algorithms that learn a policy (actor) and a value estimate (critic).</p>
+        <div class="meta">Folder: <span class="kbd">actor-critic/</span></div>
+      </article>
+
+      <article class="card">
+        <h2><a href="policy-methods/">Policy Methods</a></h2>
+        <p>Directly optimize policies. Includes sub-classes like policy gradient.</p>
+        <div class="meta">Folder: <span class="kbd">policy-methods/</span>  Sub: <span class="kbd">policy-gradient/</span></div>
+      </article>
+
+      <article class="card">
+        <h2><a href="value-methods/">Value Methods</a></h2>
+        <p>Learn value functions (e.g., Q-learning style methods).</p>
+        <div class="meta">Folder: <span class="kbd">value-methods/</span></div>
+      </article>
+
+      <article class="card">
+        <h2>How to add pages</h2>
+        <p>Drop a new <span class="kbd">index.html</span> into a folder, then link it from Home.</p>
+        <div class="meta">GitHub Pages serves from repo root.</div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="meta">Hosted on GitHub Pages  Repo: DeepRL</div>
+    </div>
+  </footer>
+</body>
+</html>
