@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lecture 1: The Multi-Armed Bandit — DeepRL</title>
+    <meta name="description" content="Multi-armed bandit foundations and the exploration–exploitation trade-off." />
+    <link rel="stylesheet" href="../assets/styles.css" />
+
+    <script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="brand">
+                <p class="brand-title">DeepRL</p>
+                <p class="brand-subtitle">intro-concepts</p>
+            </div>
+            <nav class="nav" aria-label="Primary">
+                <a href="../">Home</a>
+                <a href="./">Intro Concepts</a>
+                <a href="../actor-critic/">Actor-Critic</a>
+                <a href="../policy-methods/">Policy Methods</a>
+                <a href="../value-methods/">Value Methods</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main" class="container content">
+        <article class="prose">
+            <h1>Lecture 1: The Multi-Armed Bandit</h1>
+            <p class="meta">Foundations of Evaluative Feedback &amp; The Exploitation-Exploration Trade-off</p>
+
+    <p>Good morning. Today we define the bedrock of Reinforcement Learning. Unlike Supervised Learning, where an oracle provides the "correct" answer, in RL we receive <strong>evaluative feedback</strong>. We are not told what the best action was; we are only told how much reward we received for the action we chose.</p>
+
+    <h2>1. Defining the Problem: The $k$-Armed Bandit</h2>
+    <p>We consider a learning agent faced repeatedly with a choice among $k$ different options, or actions. Each choice results in a numerical reward chosen from a stationary probability distribution. Your objective is simple: maximize the total reward over a specific time period, say $T$ time steps.</p>
+
+    <div class="analogy">
+        <strong>The Dilemma:</strong> You pull arm $a_1$ and receive a reward $r=10$. This is your "greedy" choice. But what if arm $a_2$ has an expected reward of $20$, and you just haven't tried it yet? To find $a_2$, you must <strong>explore</strong>. To get the 10 you know about, you must <strong>exploit</strong>.
+    </div>
+
+    
+
+    <div class="technical-block">
+        <h4>The Mathematical Objective</h4>
+        The true value of an action $a$, denoted as $q_*(a)$, is the expected reward given that $a$ is selected:
+        <div class="formula-focus">
+            $$q_*(a) \doteq \mathbb{E}[R_t \mid A_t = a]$$
+        </div>
+        
+        If we knew $q_*(a)$ for all $a$, the problem would be trivial: always pick the $a$ that maximizes $q_*(a)$. Since we don't, we must minimize <strong>Total Regret</strong> ($L_T$):
+        <div class="formula-focus">
+            $$L_T = \sum_{t=1}^{T} \left[ q_*(a^*) - q_*(a_t) \right]$$
+        </div>
+        Where $a^*$ represents the optimal action: $a^* = \text{argmax}_a q_*(a)$.
+    </div>
+
+    <h2>2. Estimating Action Values: The Sample-Average Method</h2>
+    <p>We denote our estimate of $q_*(a)$ at time step $t$ as $Q_t(a)$. How do we calculate it? The most straightforward way is to average the rewards actually received:</p>
+
+    <div class="technical-block">
+        <h4>The Incremental Update Rule</h4>
+        Let $R_i$ be the reward received after the $i$-th selection of this action. Instead of storing all $R_1, R_2, \dots, R_n$, we derive an efficient update:
+        <div class="formula-focus">
+            $$Q_{n+1} = \frac{1}{n} \sum_{i=1}^{n} R_i = Q_n + \frac{1}{n} \left[ R_n - Q_n \right]$$
+        </div>
+        <p>This follows the universal RL update template:</p>
+        <p style="text-align: center; font-weight: bold;">$NewEstimate \leftarrow OldEstimate + StepSize \left[ Target - OldEstimate \right]$</p>
+    </div>
+
+    <h2>3. Action Selection Policies</h2>
+    
+    <h3>A. $ \epsilon $-Greedy Selection</h3>
+    <p>The simplest way to balance the trade-off. We select the action with the highest estimated value $Q_t(a)$ most of the time, but with a small probability $ \epsilon $, we select an action at random.</p>
+
+    <h3>B. Softmax Exploration</h3>
+    <p>In many scenarios, random exploration is too costly. Softmax varies the action probabilities based on the estimated value $Q_t(a)$, ensuring that actions that look "bad" are explored less frequently than actions that look "promising."</p>
+
+    <div class="technical-block">
+        <h4>The Boltzmann Distribution</h4>
+        The probability of selecting action $a$ at time $t$ is calculated as:
+        <div class="formula-focus">
+            $$Pr(A_t = a) = \frac{e^{Q_t(a)/\tau}}{\sum_{i=1}^k e^{Q_t(i)/\tau}}$$
+        </div>
+        Where $\tau > 0$ is the <strong>Temperature</strong>. 
+        <ul>
+            <li>High $\tau$: Probabilities are nearly equal (high exploration).</li>
+            <li>Low $\tau$: The action with the highest $Q$ value dominates (high exploitation).</li>
+        </ul>
+    </div>
+
+    <h2>4. Non-Stationarity: The "Moving Target"</h2>
+    <p>What if the environment changes? If $q_*(a)$ changes over time, the sample-average method fails because it gives equal weight to rewards from the distant past. In this case, we use a <strong>Constant Step Size</strong> $\alpha \in (0, 1]$.</p>
+
+    <div class="technical-block">
+        <h4>Exponential Recency-Weighted Average</h4>
+        The update becomes:
+        <div class="formula-focus">
+            $$Q_{n+1} = Q_n + \alpha [R_n - Q_n]$$
+        </div>
+        When we unroll this recursion, we see the weight of older rewards decays exponentially:
+        <div class="formula-focus">
+            $$Q_{n+1} = (1-\alpha)^n Q_1 + \sum_{i=1}^n \alpha(1-\alpha)^{n-i} R_i$$
+        </div>
+        The sum of the weights is $(1-\alpha)^n + \sum_{i=1}^n \alpha(1-\alpha)^{n-i} = 1$.
+    </div>
+
+    <h2>5. Advanced Decision Logic</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Algorithm</th>
+                <th>Core Intuition</th>
+                <th>Mathematical Selection Rule</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>UCB (Upper Confidence Bound)</strong></td>
+                <td>Exploration is handled by adding an "uncertainty bonus" to the estimate.</td>
+                <td>$$A_t = \text{argmax}_a \left[ Q_t(a) + c \sqrt{\frac{\ln t}{N_t(a)}} \right]$$</td>
+            </tr>
+            <tr>
+                <td><strong>Thompson Sampling</strong></td>
+                <td>A Bayesian approach where we sample from the posterior distribution of each arm.</td>
+                <td>$$\text{Sample } \theta_i \sim P(\mu_i | \text{data}), \text{ select } \text{argmax}(\theta_i)$$</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-box">
+        <h4>Key Takeaways for the Final Exam</h4>
+        <ul>
+            <li><strong>The Balance:</strong> You cannot maximize reward without exploring, but exploration inherently incurs a cost (Regret).</li>
+            <li><strong>The Step-Size:</strong> Use $1/n$ for stationary problems (converges to the mean). Use a constant $\alpha$ for non-stationary problems (tracks the moving mean).</li>
+            <li><strong>$Q_t(a)$ vs $q_*(a)$:</strong> Always remember that $Q$ is our <em>guess</em>, and $q$ is the <em>truth</em>.</li>
+        </ul>
+    </div>
+
+            <p class="meta">University Department of Computer Science &amp; Engineering | Lecture 1 Notes | Professor AI</p>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="meta">DeepRL  <a href="./">Back to intro concepts</a></div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -123,6 +123,10 @@ a:hover{text-decoration:underline}
 pre{margin:0;white-space:pre;min-width:0}
 code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.95rem}
 
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem .7rem;vertical-align:top;text-align:left}
+th{font-weight:650}
+
 .site-footer{
   border-top:1px solid var(--border);
   color:var(--muted);
