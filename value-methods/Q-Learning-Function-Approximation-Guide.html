@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Neural Network as Q-Value Function — Notes</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: auto; padding: 20px; }
+code { background: #f4f4f4; padding: 4px 6px; border-radius: 4px; }
+.section { margin-bottom: 28px; }
+</style>
+</head>
+<body>
+
+<h2>Neural Network as a Q-Value Function (DQN-style Action-Value Function Approximation)</h2>
+
+<div class="section">
+<h3>1. Objective</h3>
+<p>We approximate the action-value function using parameters <b>θ</b>:</p>
+<p>
+\[
+Q_\theta(s,a) \approx \mathbb{E}\left[\sum_{k=0}^{\infty} \gamma^k r_{t+1+k} \mid s_t = s, a_t = a \right]
+\]
+</p>
+<p>The neural network replaces the Q-table and learns to generalize across states while propagating delayed rewards backward using TD bootstrapping.</p>
+</div>
+
+<div class="section">
+<h3>2. Network Architecture (Discrete Actions)</h3>
+<p><b>Input:</b> state vector <code>s</code> (real-valued if continuous, or one-hot if small discrete)</p>
+<p><b>Output layer:</b> size = number of discrete actions <b>N</b></p>
+<p>Network returns:</p>
+<p>\[
+[Q(s,a_1), Q(s,a_2), ..., Q(s,a_N)] \in \mathbb{R}^N
+\]</p>
+<p>Values are real numbers, not probabilities.</p>
+</div>
+
+<div class="section">
+<h3>3. Interaction Policy</h3>
+<p>During training, actions are chosen via:</p>
+<p>
+- Greedy: \(\arg\max_a Q_\theta(s,a)\)<br>
+- Or exploration: <b>ε-greedy</b>
+</p>
+</div>
+
+<div class="section">
+<h3>4. The Real Database</h3>
+<p>The neural network stores <b>value beliefs</b>, not raw rewards.</p>
+<p>The <b>experience replay buffer</b> stores real transitions:</p>
+<p><code>(s_t, a_t, r_{t+1}, s_{t+1}, done)</code></p>
+</div>
+
+<div class="section">
+<h3>5. Training Rule (TD Target)</h3>
+<p>For each sampled transition we compute:</p>
+<p>
+\[
+y_t = r_{t+1} + \gamma \max_a Q_\theta(s_{t+1},a)
+\]
+</p>
+<p>Loss is applied <b>only</b> to the Q-value of the executed action:</p>
+<p>
+\[
+L(\theta) = (y_t - Q_\theta(s_t, a_{\text{taken}}))^2
+\]
+</p>
+<p>Other actions get <b>zero gradient</b> because they never appear in the loss objective.</p>
+</div>
+
+<div class="section">
+<h3>6. Gradient Behavior</h3>
+<p>
+\[
+\nabla_\theta L = 2 (Q_\theta(s_t,a_t) - y_t) \cdot \nabla_\theta Q_\theta(s_t,a_t)
+\]
+</p>
+<p>No gradient flows through Q-values of actions not taken.</p>
+</div>
+
+<div class="section">
+<h3>7. Standard Implementation Pattern</h3>
+<p>Extract only the taken action’s Q-estimate using indexing or masking:</p>
+
+<pre><code>
+q_values      = model(s_t)                 # [B, N]
+next_q_values = target_model(s_{t+1})      # [B, N]
+target = r + gamma * next_q_values.max(1)  # [B] scalar targets
+predicted = q_values.gather(1, a_t)        # [B] Q(s,a_taken)
+loss = (target - predicted).pow(2).mean()
+loss.backward()
+optimizer.step()
+</code></pre>
+
+<p>Optional masking equivalent:</p>
+
+<pre><code>
+mask = one_hot(N, a_t)
+predicted = (q_values * mask).sum(dim=1)
+loss = (target - predicted)**2
+</code></pre>
+
+<p>Mask is only a selector, not a reward vector.</p>
+</div>
+
+<div class="section">
+<h3>8. Why TD Updates Propagate Delayed Rewards</h3>
+<p>Rewards that arrive late influence earlier states through chained TD backups:</p>
+<p>
+\[
+Q(s_1,a_1) \leftarrow Q(s_2) \leftarrow Q(s_3) \leftarrow \cdots \leftarrow r_{\text{final}}
+\]
+</p>
+<p>This enables credit assignment without executing all actions.</p>
+</div>
+
+<div class="section">
+<h3>9. Improvements for Stability</h3>
+<ul>
+<li>Experience Replay — breaks temporal correlation</li>
+<li>Target Network — stabilizes <code>max Q(s',a)</code> targets</li>
+<li>Reward Clipping/Scaling — avoids exploding Q-values</li>
+<li>Discount factor <b>γ</b> — controls reward horizon</li>
+<li>N-step backups, TD-λ, Prioritized replay</li>
+</ul>
+</div>
+
+---
+
+<div class="section">
+<h3>10. Concrete Example: 5×5 Grid Navigation with Delayed Reward</h3>
+
+<p><b>Environment:</b> 5×5 grid (25 states). Agent must reach goal at bottom-right. Reward is only given at the goal (+10). All other steps give 0 reward. Episode ends at goal or after 20 steps.</p>
+
+<p><b>State Encoding:</b> one-hot of size 25</p>
+<p><b>Actions:</b> 4 discrete actions: Up, Down, Left, Right</p>
+
+<p><b>Initial prediction for a state (random weights):</b></p>
+<p>
+\[
+Q(s_{12}) = [0.3, -1.2, 2.7, 0.8]
+\]
+</p>
+
+<p>Agent chooses action 3 (Right), interacts with environment and eventually reaches the goal 5 steps later and receives reward 10.</p>
+
+<p><b>Training update at state 12:</b></p>
+<p>Next state is 13, whose current Q-belief is:</p>
+<p>
+\[
+Q(s_{13}) = [0.1, -0.4, 4.9, 1.0]
+\]
+</p>
+
+<p>TD target:</p>
+<p>
+\[
+y = 0 + \gamma \cdot 4.9
+\]
+</p>
+
+<p>Assuming <b>γ = 0.99</b>:</p>
+<p>
+\[
+y = 0.99 \cdot 4.9 = 4.851
+\]
+</p>
+
+<p>We extract only Q(s12, Right) = 0.8 and compute loss:</p>
+<p>
+\[
+L = (4.851 - 0.8)^2 = 16.43
+\]
+</p>
+
+<p>Gradient descent updates the weights so that next time the network predicts something closer to 4.851 for that action in that state. Other 3 actions receive no update for this sample because their targets equal their predictions (error = 0).</p>
+
+<p>After many episodes, the network learns:</p>
+<p>
+- Paths that lead closer to goal get higher Q values<br>
+- Goal state outputs ≈ 10 for all actions that reach it<br>
+- Earlier states gain credit recursively
+</p>
+
+<p><b>Learned prediction after training:</b></p>
+<p>
+\[
+Q(s_{12}) \approx [2.0, 3.4, 5.1, 5.0]
+\]
+</p>
+
+<p>Now the network correctly believes that moving Right or Down from that region is highly valuable because those actions lead toward the delayed reward.</p>
+</div>
+
+---
+
+<div class="section">
+<h3>11. Key Terminology</h3>
+<ul>
+<li><b>Q-Learning with Function Approximation</b> — neural net parameterizes Q</li>
+<li><b>Deep Q-Network (DQN)</b> — Q approximator trained with TD regression</li>
+<li><b>Semi-gradient TD update</b> — target uses estimates but gradient updates only Q(s,a_taken)</li>
+<li><b>TD Backup</b> — recursive value propagation</li>
+</ul>
+</div>
+
+<div class="section">
+<h3>12. Final Correct Mental Model</h3>
+<p>
+- Neural network stores <b>Q beliefs</b> in weights<br>
+- Environment interactions are stored in <b>replay buffer</b><br>
+- Reward feedback is a <b>scalar TD target</b><br>
+- Loss updates <b>only one action’s Q value</b> per sample<br>
+- Other actions change only indirectly through shared representation learning, not reward supervision
+</p>
+</div>
+
+</body>
+</html>
