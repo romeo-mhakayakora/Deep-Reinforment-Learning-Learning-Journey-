@@ -1,10 +1,10 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Policy Methods  DeepRL</title>
-  <meta name="description" content="Policy-based methods and sub-classes." />
+  <title>Intro Concepts — DeepRL</title>
+  <meta name="description" content="Intro reinforcement learning concepts." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
 <body>
@@ -14,13 +14,13 @@
     <div class="container">
       <div class="brand">
         <p class="brand-title">DeepRL</p>
-        <p class="brand-subtitle">policy-methods</p>
+        <p class="brand-subtitle">intro-concepts</p>
       </div>
       <nav class="nav" aria-label="Primary">
         <a href="../">Home</a>
-        <a href="../intro-concepts/">Intro Concepts</a>
+        <a href="./" aria-current="page">Intro Concepts</a>
         <a href="../actor-critic/">Actor-Critic</a>
-        <a href="./" aria-current="page">Policy Methods</a>
+        <a href="../policy-methods/">Policy Methods</a>
         <a href="../value-methods/">Value Methods</a>
       </nav>
     </div>
@@ -28,14 +28,18 @@
 
   <main id="main" class="container content">
     <article class="prose">
-      <h1>Policy Methods</h1>
-      <p class="meta">Landing page for <span class="kbd">policy-methods/</span>.</p>
+      <h1>Intro Concepts</h1>
+      <p class="meta">Pages in <span class="kbd">intro-concepts/</span>.</p>
 
-      <section class="grid" aria-label="Policy methods sub-sections">
+      <section class="grid" aria-label="Intro concept pages">
         <article class="card">
-          <h2><a href="policy-gradient/">Policy Gradient</a></h2>
-          <p>Sub-class focused on optimizing a parameterized policy with gradients.</p>
-          <div class="meta">Folder: <span class="kbd">policy-methods/policy-gradient/</span></div>
+          <h2><a href="markov-property-and-mdp.html">Markov Property &amp; MDP</a></h2>
+          <p>How the Markov property leads to the MDP formulation used in RL.</p>
+        </article>
+
+        <article class="card">
+          <h2><a href="value-and-policy-methods.html">Policy vs Value Functions</a></h2>
+          <p>What policies, $V$, and $Q$ represent and how “direct vs indirect” methods differ.</p>
         </article>
       </section>
     </article>

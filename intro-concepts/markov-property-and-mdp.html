@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>RL Notes — Markov Property & MDP</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: auto; padding: 24px; }
+.section { margin-bottom: 34px; }
+pre { background:#f6f6f6; padding:12px; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<h2>Markov Property and MDP Formulation in Reinforcement Learning</h2>
+
+<div class="section">
+<h3>1. Definition: Markov Property</h3>
+<p>An environment satisfies the <b>Markov property</b> if the next state depends only on the present state and present action, not the full past:</p>
+<p>
+\[
+P(s_{t+1} \mid s_t, a_t, s_{t-1}, a_{t-1}, \dots) = P(s_{t+1} \mid s_t, a_t)
+\]
+</p>
+<p>Implication: The agent can choose optimal actions using only the current state, without tracking the entire history.</p>
+</div>
+
+<div class="section">
+<h3>2. What is an MDP?</h3>
+<p>A <b>Markov Decision Process (MDP)</b> is a sequential decision/control task that obeys the Markov property and contains:</p>
+<p>
+\[
+(\mathcal{S}, \mathcal{A}, P(s'|s,a), R(s,a), \gamma)
+\]
+</p>
+<ul>
+<li>\(\mathcal{S}\): State space (what the agent knows at decision time)</li>
+<li>\(\mathcal{A}\): Action space</li>
+<li>\(P(s'|s,a)\): Transition dynamics (usually unknown to the agent in RL)</li>
+<li>\(R(s,a)\): Reward function</li>
+<li>\(\gamma\): Discount factor</li>
+</ul>
+<p>In standard RL, the agent does <b>not</b> know \(P\) or \(R\); it learns by interacting with the environment.</p>
+</div>
+
+<div class="section">
+<h3>3. Testing Understanding of the Markov Property — Practical Examples</h3>
+
+<h4>3.1 Driving a Car</h4>
+<p>Generally considered Markov because you do not need conditions from 10 minutes ago to drive optimally. The decision depends on <b>current</b> information such as position, obstacles, and goal direction.</p>
+
+<h4>3.2 Stock Investment Decision</h4>
+<p>Not Markov if state is only today's price, because good decisions depend on past performance. However, we can <b>induce</b> Markov by redefining state to include history in the present snapshot:</p>
+<p>
+\[
+s_t = [p_t, p_{t-1}, ..., p_{t-29}]
+\] 
+(30-day window packed into the current state)
+</p>
+<p>or include engineered indicators:</p>
+<p>
+\[
+s_t = [p_t, \text{MA}_7, \text{MA}_{30}, \text{RSI}, \sigma_{\text{vol}}, \dots]
+\]
+</p>
+<p>Now decisions depend only on this constructed state, satisfying approximate Markov assumptions.</p>
+
+<h4>3.3 Choosing a Medical Treatment</h4>
+<p>Appears Markov if the state contains <b>current symptoms and vitals</b>, because treatment depends on the present condition, not the patient’s biography.</p>
+
+<h4>3.4 Diagnosing an Illness</h4>
+<p>Not Markov if diagnosis requires symptom progression. But again, we can <b>induce Markov</b> by packing the recent symptom history into a single present state (e.g., medical record snapshot):</p>
+<p>
+\[
+s_t = [\text{vitals}, \text{symptom timeline}, \text{test results}, \dots]
+\]
+</p>
+<p>Now the agent reasons without external past reference, because the record is treated as the current state.</p>
+
+<h4>3.5 Predicting Football Match Winners</h4>
+<p>Not Markov because predictions depend on historical team performance. Unlike RL control tasks, this is a <b>prediction</b> problem, not a control MDP unless reformulated.</p>
+
+<h4>3.6 Choosing the Shortest Route</h4>
+<p>Markov because optimal choice depends only on the <b>current route distances</b> and map, not what happened yesterday.</p>
+
+<h4>3.7 Aiming a Gun at a Target</h4>
+<p>Markov because optimal decision depends on <b>current conditions</b> such as target position, wind velocity, and gun parameters — not yesterday’s wind.</p>
+</div>
+
+<div class="section">
+<h3>4. DQN and MDP Induction in Atari/Pacman</h3>
+<p>A single raw frame from Atari/Pacman is <b>not</b> Markov, because it lacks motion direction and velocity. The agent cannot infer whether a ghost is approaching or leaving.</p>
+
+<p>DeepMind induced an approximate MDP by stacking the last 4 frames into the present state:</p>
+<p>
+\[
+s_t = [f_t, f_{t-1}, f_{t-2}, f_{t-3}]
+\]
+</p>
+
+<p>With 4 frames, the agent can infer:</p>
+<ul>
+<li>direction of moving objects,</li>
+<li>relative velocity (via pixel shifts across frames),</li>
+<li>and can act without needing any information outside the current stacked state.</li>
+</ul>
+
+<p>This technique is formally referred to as:</p>
+<p><b>Observation (Frame) Stacking for MDP Induction</b></p>
+</div>
+
+<div class="section">
+<h3>5. Inducing Markovian State — General Principle</h3>
+<p>Many real problems are not naturally Markov, but we can approximate Markov behavior by <b>jamming more information into the state</b> so that future rewards/outcomes depend mainly on this new present state, not the full past.</p>
+</div>
+
+<div class="section">
+<h3>6. Takeaways</h3>
+<ul>
+<li>RL environments must be MDPs or reformulated to be approximately Markov.</li>
+<li>Non-Markov tasks become POMDPs; we approximate Markov by redefining state.</li>
+<li>Stacking observations or encoding history inside state is the standard solution.</li>
+<li>The <b>algorithm is not manipulated</b> to become Markov — the <b>state definition is</b>.</li>
+</ul>
+</div>
+
+</body>
+</html>

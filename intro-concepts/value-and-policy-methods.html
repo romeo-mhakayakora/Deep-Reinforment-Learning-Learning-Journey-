@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>RL Notes — Policy & Value Functions (Direct vs Indirect)</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: auto; padding: 24px; }
+.section { margin-bottom: 34px; }
+table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+td, th { border: 1px solid #ddd; padding: 8px; }
+pre { background:#f6f6f6; padding:12px; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<h2>Policy Functions and Value Functions in Reinforcement Learning</h2>
+
+<div class="section">
+<h3>1. Policy Function \( \pi \)</h3>
+<p>A policy defines the agent’s strategy. In formal notation:</p>
+<p>
+\[
+\pi: s \rightarrow P(A \mid s), \quad s \in \mathcal{S}
+\]
+</p>
+<p>Meaning:</p>
+<ul>
+<li>The agent receives a state \(s\).</li>
+<li>The policy outputs a probability distribution over all valid actions.</li>
+<li>Each probability expresses how likely that action is believed to lead to high reward.</li>
+<li>Example of a fixed policy: Blackjack dealer always hits until total ≥ 17.</li>
+<li>Example of a learned policy: networks trained in PPO, SAC (actor), etc.</li>
+</ul>
+</div>
+
+<div class="section">
+<h3>2. State-Value Function \( V_\pi(s) \)</h3>
+<p>A value function scores how good it is to be in a state while following policy \(\pi\):</p>
+<p>
+\[
+V_\pi: s \rightarrow \mathbb{E}[R \mid s, \pi]
+\]
+</p>
+<p>Scientific form:</p>
+<p>
+\[
+V_\pi(s) = \mathbb{E}\left[\sum_{k=0}^{\infty} \gamma^k r_{t+1+k} \mid s_t = s, \pi\right]
+\]
+</p>
+<p>Intuition:</p>
+<ul>
+<li>If \(\pi\) picks poor actions, \(V_\pi(s)\) becomes low.</li>
+<li>If \(\pi\) leads to high reward states, \(V_\pi(s)\) becomes high.</li>
+<li>So the value function reflects reward quality <b>under a given policy</b>.</li>
+</ul>
+</div>
+
+<div class="section">
+<h3>3. Action-Value Function \( Q_\pi(s,a) \)</h3>
+<p>Q-values score the expected return of taking action \(a\) in state \(s\), then continuing with policy \(\pi\):</p>
+<p>
+\[
+Q_\pi: (s,a) \rightarrow \mathbb{E}[R \mid a, s, \pi]
+\]
+</p>
+<p>Scientific form:</p>
+<p>
+\[
+Q_\pi(s,a) = \mathbb{E}\left[\sum_{k=0}^{\infty} \gamma^k r_{t+1+k} \mid s_t = s, a_t = a, \pi\right]
+\]
+</p>
+<p>Intuition:</p>
+<ul>
+<li>Unlike \(V_\pi\), which evaluates a state, \(Q_\pi\) evaluates a <b>decision</b> in that state.</li>
+<li>The agent can act greedily using Q, but Q itself is about <b>evaluation</b>, not behavior learning.</li>
+</ul>
+</div>
+
+<div class="section">
+<h3>4. Direct vs Indirect Reward-Maximization Learning</h3>
+<p>The agent ultimately wants to take actions that maximize long-term reward. There are <b>two distinct philosophies</b> in how learning happens:</p>
+
+<ul>
+<li>
+<b>Direct Policy Learning</b>  
+\[
+\text{Learns: } \pi_\theta(a|s)
+\]
+This trains a model whose job is to <b>choose and execute</b> the best action given a state.
+</li>
+
+<li>
+<b>Indirect Value Learning (Control via Evaluation)</b>  
+\[
+\text{Learns: } V_\pi(s) \text{ or } Q_\pi(s,a)
+\]
+This trains the agent to know <b>which states or actions are valuable</b>, but the policy is <b>derived</b> afterward, usually via:
+\[
+a_t = \arg\max_a Q_\theta(s_t,a)
+\]
+It does <b>not</b> explicitly train behavior — it trains <b>judgment</b>.
+</li>
+</ul>
+
+<p>So the practical difference is:</p>
+
+<table>
+<tr><th>Approach</th><th>Function Learned</th><th>What the agent is taught</th></tr>
+<tr><td>Direct</td><td>\(\pi_\theta(a|s)\)</td><td>What action to take</td></tr>
+<tr><td>Indirect</td><td>\(V(s)\) or \(Q(s,a)\)</td><td>What is good, not what to do directly</td></tr>
+</table>
+
+<p>Analogy:</p>
+<ul>
+<li>Direct → learning to <b>drive the car</b></li>
+<li>Indirect → learning to <b>evaluate a map</b>, then choosing the best route yourself</li>
+<li>Action movies analogy: the danger is the resulting state, not the action itself — the action may lead to different outcomes, so the value function must learn <b>expected outcomes, not action labels</b>.</li>
+</ul>
+</div>
+
+
+
+<div class="section">
+<h3>6. Final Takeaways</h3>
+<ul>
+<li>Policy \( \pi_\theta \) learns behavior directly.</li>
+<li>Value functions \(V\) and \(Q\) learn <b>evaluation</b>.</li>
+<li>Indirect learning trains the network to score states/actions, and the agent derives behavior via argmax over Q.</li>
+
+</ul>
+</div>
+
+</body>
+</html>
