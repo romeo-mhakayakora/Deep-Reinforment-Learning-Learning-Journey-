@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lecture 2: Contextual Bandits — DeepRL</title>
+    <meta name="description" content="Contextual bandits, state spaces, and function approximation." />
+    <link rel="stylesheet" href="../assets/styles.css" />
+    
+    <script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container">
+            <div class="brand">
+                <p class="brand-title">DeepRL</p>
+                <p class="brand-subtitle">intro-concepts</p>
+            </div>
+            <nav class="nav" aria-label="Primary">
+                <a href="../">Home</a>
+                <a href="./">Intro Concepts</a>
+                <a href="../actor-critic/">Actor-Critic</a>
+                <a href="../policy-methods/">Policy Methods</a>
+                <a href="../value-methods/">Value Methods</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main" class="container content">
+        <article class="prose">
+            <h1>Contextual Bandits</h1>
+            <p class="meta">Introducing State Spaces &amp; Function Approximation</p>
+
+    
+
+    <h2>1. The Limitation of "Stateless" Learning</h2>
+    <p>The standard $n$-armed bandit assumes there is no information in the environment to help us choose a good arm other than past trial and error. However, consider an ad-placement engine for a website network:</p>
+    
+    <div class="analogy">
+        <strong>The Jewelry vs. Tech Scenario:</strong> If a customer is checking out on a jewelry site, they might be in the mood for luxury shoes. If they are on a tech blog, they might prefer a laptop ad. If we treat this as a standard bandit, we would only learn the "average" best ad across all sites, missing the specific nuances of each user's context.
+    </div>
+
+    
+
+    <h2>2. Defining States, Actions, and Rewards</h2>
+    <p>Reinforcement Learning algorithms model the world as a structured interaction between three key components. In Contextual Bandits, we specifically learn from <strong>State-Action Pairs</strong> $(s, a)$.</p>
+
+    <div class="technical-block">
+        <h4>The RL Triad</h4>
+        <ul>
+            <li><strong>State Space ($S$):</strong> The set of information available in the environment used to make decisions (e.g., the current website).</li>
+            <li><strong>Action Space ($A$):</strong> The set of all possible actions (e.g., the 10 available ads).</li>
+            <li><strong>Reward ($r$):</strong> The numerical feedback provided for a specific action in a specific state (e.g., a user click).</li>
+        </ul>
+        <div class="formula-focus">
+            $$q_*(s, a) \doteq \mathbb{E}[R_t \mid S_t = s, A_t = a]$$
+        </div>
+        <strong>Objective:</strong> Maximize rewards over the course of an entire episode by learning which action fits which state.
+    </div>
+
+    <h2>3. The Combinatorial Explosion</h2>
+    <p>In the 10-armed bandit, we used a lookup table with 10 rows. When we introduce states, the complexity grows multiplicatively. If we have 100 possible states and 10 actions per state, we now need to store 1,000 pieces of data. In modern computing (e.g., image-based states), the state space is often <strong>intractably large</strong>, making simple tables impossible to use.</p>
+
+    <div class="highlight-box">
+        <strong>The Problem:</strong> A lookup table cannot generalize. If the agent sees a state that is 99% similar to one it knows, but slightly different, a lookup table treats it as a completely new mystery.
+    </div>
+
+    <h2>4. Deep Learning: The Neural Agent</h2>
+    <p>To solve the scaling issue, we replace the lookup table with a <strong>Neural Network</strong>. Neural networks are high-dimensional function approximators. They learn composable patterns and regularities in data, allowing them to effectively "compress" experience.</p>
+
+    <div class="technical-block">
+        <h4>The Neural Approximation</h4>
+        Instead of a raw memory of every $(s, a, r)$ tuple, the neural network learns a function mapping:
+        <div class="formula-focus">
+            $$f(s, \mathbf{w}) \rightarrow \hat{Q}(a)$$
+        </div>
+        Where $\mathbf{w}$ represents the learnable weights. The network learns abstractions that discard irrelevant details while retaining the information necessary to predict rewards for any given state.
+    </div>
+
+    <h2>5. Comparison: Evolution of Complexity</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Problem Type</th>
+                <th>State Information</th>
+                <th>Storage Method</th>
+                <th>Goal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>$n$-Armed Bandit</strong></td>
+                <td>None (Stateless)</td>
+                <td>Simple Lookup Table</td>
+                <td>Learn Action-Reward $(a, r)$</td>
+            </tr>
+            <tr>
+                <td><strong>Contextual Bandit</strong></td>
+                <td><strong>Context/State ($s$)</strong></td>
+                <td><strong>Neural Network (Agent)</strong></td>
+                <td>Learn State-Action-Reward $(s, a, r)$</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="highlight-box">
+        
+        The Contextual Bandit is the bridge to full RL. We have added <strong>States</strong>, but there is still one missing link: in Contextual Bandits, your action does <strong>not</strong> influence the next state. In our next lecture on Markov Decision Processes (MDPs), we will see what happens when the agent's choices actually change the world around it.
+    </div>
+
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="meta">DeepRL  <a href="./">Back to intro concepts</a></div>
+        </div>
+    </footer>
+
+</body>
+</html>
