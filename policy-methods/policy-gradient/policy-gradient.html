@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Policy Gradient & Action-Space Notes</title>
+
+  <!-- MathJax for correct scientific formula rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      color: #111;
+    }
+    h1 { border-bottom: 3px solid #000; padding-bottom: 8px; }
+    h2 { margin-top: 30px; border-bottom: 2px solid #222; padding-bottom: 4px; }
+    h3 { margin-top: 20px; }
+    code {
+      background: #f4f4f4;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #000;
+      padding: 8px;
+    }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Policy Gradient, Probability & Action-Space in Reinforcement Learning</h1>
+
+<!-- ===================================================== -->
+<h2>1. Value-Based vs Policy-Based Learning</h2>
+
+<h3>1.1 Deep Q-Network (DQN) — Value Learning</h3>
+<ul>
+  <li>DQN learns <strong>action-values</strong>: \(Q(s,a)\)</li>
+  <li>Action is chosen using an external strategy (e.g., <code>epsilon-greedy</code>)</li>
+  <li>Training stability requires additional engineering:
+      <ul>
+        <li>Experience Replay</li>
+        <li>Target Networks</li>
+        <li>Other stabilization tricks in academic literature</li>
+      </ul>
+  </li>
+</ul>
+
+<h3>1.2 Policy Network — Direct Action Sampling</h3>
+<ul>
+  <li>Instead of learning \(Q(s,a)\), the network directly learns a policy:
+      \[
+        \pi_\theta : s \rightarrow P(a|s)
+      \]
+  </li>
+  <li>Outputs a probability distribution over actions</li>
+  <li>Action is selected by sampling from \(P(A|S)\)</li>
+  <li>No need for <code>epsilon-greedy</code> since exploration comes from sampling</li>
+  <li>Often simplifies training complexity compared to DQN</li>
+</ul>
+
+<!-- ===================================================== -->
+<h2>2. Understanding Probability in Policies</h2>
+
+<h3>2.1 Conditional Probability Notation</h3>
+<p>
+  General conditional probability:
+  \[
+    P(x|y)
+  \]
+  Meaning: A function that takes parameter \(y\) and returns a distribution over \(x\).
+</p>
+
+<h3>2.2 Policy Probability Notation in RL</h3>
+<p>
+  Probability of taking action \(a\) from policy network with parameters \(\theta\):
+  \[
+    \pi_s(a|\theta)
+  \]
+  Often shortened to:
+  \[
+    \pi(a|s,\theta)
+  \]
+</p>
+
+<h3>2.3 Credence Interpretation of Probability</h3>
+<ul>
+  <li>Probabilities represent <strong>degree of belief</strong> (credence), not deterministic truth</li>
+  <li>If an outcome cannot be predicted with probability 0 or 1, the agent lacks knowledge</li>
+  <li>Early training should have <strong>uniform distribution</strong> to maximize exploration</li>
+  <li>Later, distribution should peak on beneficial actions</li>
+</ul>
+
+<!-- ===================================================== -->
+<h2>3. Discrete vs Continuous Action Spaces</h2>
+
+<table>
+  <tr>
+    <th>Feature</th>
+    <th>Discrete Action Space</th>
+    <th>Continuous Action Space</th>
+  </tr>
+  <tr>
+    <td>Distribution</td>
+    <td>Categorical (Multinoulli)</td>
+    <td>Gaussian (Normal)</td>
+  </tr>
+  <tr>
+    <td>Function</td>
+    <td>Probability Mass Function (PMF)</td>
+    <td>Probability Density Function (PDF)</td>
+  </tr>
+  <tr>
+    <td>Network Output</td>
+    <td>Probabilities \([p_1, p_2, ...]\)</td>
+    <td>Parameters \((\mu, \sigma)\)</td>
+  </tr>
+  <tr>
+    <td>Example</td>
+    <td>Move Left, Right, Jump</td>
+    <td>Velocity, Steering Angle, Motor Power</td>
+  </tr>
+  <tr>
+    <td>Exact single value probability</td>
+    <td>Can be non-zero for a specific action</td>
+    <td>Always 0 for a single exact number</td>
+  </tr>
+</table>
+
+<h3>3.1 Discrete Distribution (PMF)</h3>
+<p>
+  For a discrete action set \(A\):
+  \[
+    P(A_i) \in [0,1], \quad \sum_{i=1}^{|A|} P(A_i) = 1
+  \]
+  Represented as a vector, e.g.:
+  \[
+    [up, down, left, right] \rightarrow [0.25, 0.25, 0.10, 0.40]
+  \]
+</p>
+
+<h3>3.2 Continuous Distribution (PDF)</h3>
+<p>
+  Continuous policies commonly model actions using the <strong>Normal distribution</strong>:
+  \[
+    f(x|\mu,\sigma) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}
+  \]
+  Where:
+  <ul>
+    <li>\(\mu\) = Mean (best predicted action center)</li>
+    <li>\(\sigma\) = Standard deviation (exploration width)</li>
+  </ul>
+</p>
+
+<!-- ===================================================== -->
+<h2>4. Policy Gradient Algorithms</h2>
+
+<h3>4.1 Stochastic Policy Gradient</h3>
+<ul>
+  <li>Policy outputs a full probability distribution</li>
+  <li>Same state can produce different actions (non-deterministic)</li>
+  <li>Ensures exploration naturally</li>
+</ul>
+
+<h3>4.2 Deterministic Policy Gradient (DPG)</h3>
+<ul>
+  <li>Policy outputs a <strong>single fixed action</strong></li>
+  <li>For discrete actions, a deterministic policy could be a one-hot vector:
+      \[
+        [0,0,1,0]
+      \]
+  </li>
+  <li>Lacks randomness, so <strong>poor exploration</strong></li>
+  <li>Hard to make fully differentiable in discrete settings</li>
+  <li>More suited for continuous action control</li>
+</ul>
+
+<!-- ===================================================== -->
+<h2>5. Log-Probability Surrogate Loss</h2>
+
+<h3>5.1 Why Avoid Raw Probability Loss?</h3>
+<ul>
+  <li>Probabilities are bounded to \([0,1]\) → small dynamic range</li>
+  <li>Values extremely close to 0 or 1 cause <strong>numerical instability</strong></li>
+  <li>Gradients struggle to propagate effectively</li>
+</ul>
+
+<h3>5.2 Stable Surrogate Objective</h3>
+<p>
+  Instead of minimizing:
+  \[
+    1 - \pi(a|s,\theta)
+  \]
+  We minimize:
+  \[
+    -\log \pi(a|s,\theta)
+  \]
+  Because:
+  <ul>
+    <li>Log probability space has larger dynamic range: \((-\infty, 0)\)</li>
+    <li>Turns products into sums using:
+        \[
+          \log(a \cdot b) = \log a + \log b
+        \]
+    </li>
+    <li>More numerically stable than multiplication</li>
+  </ul>
+</p>
+
+<!-- ===================================================== -->
+<h2>6. Credit Assignment & Discounting</h2>
+
+<h3>6.1 The Problem</h3>
+<ul>
+  <li>Basic policy gradient updates weight all actions equally</li>
+  <li>But actions closer to reward should get more credit</li>
+  <li>We are less confident about early actions and more confident about final ones</li>
+</ul>
+
+<h3>6.2 Discount Factor \( \gamma^t \)</h3>
+<p>
+  Discount factor decays exponentially based on distance from reward:
+  \[
+    \gamma^{T - t}
+  \]
+  Examples:
+  <ul>
+    <li>For last action: \(T - t = 0\):
+        \[
+          \gamma^0 = 1
+        \]
+    </li>
+    <li>Two steps before end: \(T - t = 2\):
+        \[
+          \gamma^2 = 0.99^2 = 0.9801
+        \]
+    </li>
+  </ul>
+  Meaning: The further back the action, the smaller its gradient update.
+</p>
+
+<h3>6.3 Total Return \(G_t\)</h3>
+<p>
+  Future return from time step \(t\) until episode end:
+  \[
+    G_t = r_t + r_{t+1} + ... + r_T
+  \]
+  or expanded:
+  \[
+    G_t = r_t + r_{t+1} + r_{t+2} + \dots + r_{T-1} + r_T
+  \]
+</p>
+
+<h3>6.4 Final Policy Gradient Loss (as used in book)</h3>
+<p>
+  \[
+    L = -\gamma^{T-t} \cdot G_t \cdot \log \pi(a|s,\theta)
+  \]
+  This ensures:
+  <ul>
+    <li>High reward actions increase in probability</li>
+    <li>Bad final actions get discounted least, so they update strongly</li>
+    <li>Early actions update weakly → improved credit allocation</li>
+  </ul>
+</p>
+
+<!-- ===================================================== -->
+<h2>7. Direct vs Indirect Training Goals</h2>
+
+<h3>7.1 Direct Method — Policy Learning</h3>
+<ul>
+  <li>Teach the agent which actions are best for each state</li>
+  <li>Directly optimizes \( \pi(a|s,\theta) \)</li>
+</ul>
+
+<h3>7.2 Indirect Method — Value Learning</h3>
+<ul>
+  <li>Teach the agent which states are most valuable</li>
+  <li>Then take actions that lead to those states</li>
+  <li>This is what the critic does in Actor-Critic or what Q-networks do</li>
+</ul>
+
+</body>
+</html>
