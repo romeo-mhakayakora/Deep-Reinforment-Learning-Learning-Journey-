@@ -10,35 +10,78 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <header class="site-header">
-    <div class="container">
-      <div class="brand">
-        <p class="brand-title">DeepRL</p>
-        <p class="brand-subtitle">policy-gradient</p>
-      </div>
-      <nav class="nav" aria-label="Primary">
-        <a href="../../">Home</a>
-        <a href="../../intro-concepts/">Intro Concepts</a>
-        <a href="../">Policy Methods</a>
-        <a href="./" aria-current="page">Policy Gradient</a>
-        <a href="../../value-methods/">Value Methods</a>
-        <a href="../../actor-critic-methods/">Actor-Critic Methods</a>
-      </nav>
-    </div>
-  </header>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Policy Gradient & Action-Space Notes</title>
 
-  <main id="main" class="container content">
-    <article class="prose">
-      <h1>Policy Gradient</h1>
-      <p class="meta">Placeholder landing page for <span class="kbd">policy-methods/policy-gradient/</span>.</p>
-      <p>Add your policy-gradient pages here and link them from this index.</p>
-    </article>
-  </main>
+  <!-- MathJax for correct scientific formula rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="meta">DeepRL  <a href="../">Back to policy methods</a></div>
-    </div>
-  </footer>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      color: #111;
+    }
+    h1 { border-bottom: 3px solid #000; padding-bottom: 8px; }
+    h2 { margin-top: 30px; border-bottom: 2px solid #222; padding-bottom: 4px; }
+    h3 { margin-top: 20px; }
+    code {
+      background: #f4f4f4;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #000;
+      padding: 8px;
+    }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+<h1>Policy Gradient, Probability & Action-Space in Reinforcement Learning</h1>
+
+<!-- ===================================================== -->
+<h2>1. Value-Based vs Policy-Based Learning</h2>
+
+<h3>1.1 Deep Q-Network (DQN) — Value Learning</h3>
+<ul>
+  <li>DQN learns <strong>action-values</strong>: \(Q(s,a)\)</li>
+  <li>Action is chosen using an external strategy (e.g., <code>epsilon-greedy</code>)</li>
+  <li>Training stability requires additional engineering:
+      <ul>
+        <li>Experience Replay</li>
+        <li>Target Networks</li>
+        <li>Other stabilization tricks in academic literature</li>
+      </ul>
+  </li>
+</ul>
+
+<h3>1.2 Policy Network — Direct Action Sampling</h3>
+<ul>
+  <li>Instead of learning \(Q(s,a)\), the network directly learns a policy:
+      \[
+        \pi_\theta : s \rightarrow P(a|s)
+      \]
+  </li>
+  <li>Outputs a probability distribution over actions</li>
+  <li>Action is selected by sampling from \(P(A|S)\)</li>
+  <li>No need for <code>epsilon-greedy</code> since exploration comes from sampling</li>
+  <li>Often simplifies training complexity compared to DQN</li>
+</ul>
+
+<!-- ...rest of policy-gradient.html content... -->
 </body>
 </html>
